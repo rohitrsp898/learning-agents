@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Insight Agent</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #8b5cf6;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --border: rgba(148, 163, 184, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #c084fc, #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 1rem;
+            letter-spacing: -0.05em;
+        }
+
+        /* Input Section */
+        .input-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .input-card:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            outline: none;
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--text-muted);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 0.75rem;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s, transform 0.5s;
+        }
+
+        .results-grid.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (min-width: 1024px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .full-width {
+                grid-column: span 2;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* SQL Block */
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            color: #a5b4fc;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Table */
+        .table-container {
+            overflow-x: auto;
+            max-height: 400px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* Summary */
+        .summary-text {
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* Loading */
+        .loader {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error-msg {
+            color: #ef4444;
+            margin-top: 1rem;
+            font-weight: 500;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>SQL Insight Agent</h1>
+
+        <div class="input-card">
+            <input type="text" id="queryInput" placeholder="Ask a question (e.g., 'Show me the top selling products')">
+            <button id="searchBtn">
+                <span class="btn-text">Data</span>
+                <div class="loader"></div>
+            </button>
+        </div>
+
+        <div id="errorMsg" class="error-msg card"
+            style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3);"></div>
+
+        <div class="results-grid" id="resultsArea">
+
+            <div class="card full-width">
+                <div class="card-header">Summary</div>
+                <div class="summary-text" id="summaryText"></div>
+            </div>
+
+            <div class="card full-width">
+                <div class="card-header">Generated SQL</div>
+                <pre id="sqlOutput">-- SQL will appear here</pre>
+            </div>
+
+            <div class="card full-width">
+                <div class="card-header">
+                    Data Source
+                    <span id="rowCount"
+                        style="font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 0.2rem 0.6rem; border-radius: 10px;">0
+                        rows</span>
+                </div>
+                <div class="table-container">
+                    <table id="dataTable">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div id="noDataMsg" style="text-align: center; color: var(--text-muted); padding: 2rem; display: none;">
+                    No data returned.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('queryInput');
+        const btn = document.getElementById('searchBtn');
+        const loader = document.querySelector('.loader');
+        const btnText = document.querySelector('.btn-text');
+        const resultsArea = document.getElementById('resultsArea');
+        const errorMsg = document.getElementById('errorMsg');
+
+        let myChart = null;
+
+        input.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') fetchData();
+        });
+
+        btn.addEventListener('click', fetchData);
+
+        async function fetchData() {
+            const query = input.value.trim();
+            if (!query) return;
+
+            // UI State: Loading
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            loader.style.display = 'block';
+            resultsArea.classList.remove('visible');
+            errorMsg.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    renderResults(data);
+                }
+
+            } catch (err) {
+                showError("Network error or server failed to respond.");
+                console.error(err);
+            } finally {
+                // UI State: Ready
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                loader.style.display = 'none';
+            }
+        }
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+        }
+
+        function renderResults(res) {
+            // 1. Summary
+            document.getElementById('summaryText').textContent = res.summary || "No summary provided.";
+
+            // 2. SQL
+            document.getElementById('sqlOutput').textContent = res.sql || "-- No SQL generated";
+
+            // 3. Table & Graph Logic
+            const rows = res.data || [];
+            document.getElementById('rowCount').textContent = `${rows.length} rows`;
+
+            renderTable(rows);
+            // renderGraph(rows); // Commented out - canvas element not in HTML
+
+            resultsArea.classList.add('visible');
+        }
+
+        function renderTable(rows) {
+            const thead = document.querySelector('#dataTable thead');
+            const tbody = document.querySelector('#dataTable tbody');
+            const noDataMsg = document.getElementById('noDataMsg');
+            const tableEl = document.getElementById('dataTable');
+
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!rows || rows.length === 0) {
+                tableEl.style.display = 'none';
+                noDataMsg.style.display = 'block';
+                return;
+            }
+
+            tableEl.style.display = 'table';
+            noDataMsg.style.display = 'none';
+
+            const headers = Object.keys(rows[0]);
+
+            // Header
+            const trHead = document.createElement('tr');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                trHead.appendChild(th);
+            });
+            thead.appendChild(trHead);
+
+            // Body
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                headers.forEach(h => {
+                    const td = document.createElement('td');
+                    td.textContent = row[h];
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderGraph(rows) {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            const noGraphMsg = document.getElementById('noGraphMsg');
+            const canvas = document.getElementById('chartCanvas');
+
+            if (myChart) myChart.destroy();
+
+            if (!rows || rows.length === 0) {
+                canvas.style.display = 'none';
+                noGraphMsg.style.display = 'block';
+                return;
+            }
+
+            // Heuristic for graphing
+            // 1. Look for Label column (string/date)
+            // 2. Look for Value column (number)
+
+            const keys = Object.keys(rows[0]);
+            let labelKey = null;
+            let dataKeys = [];
+
+            keys.forEach(k => {
+                const val = rows[0][k];
+                if (typeof val === 'number') {
+                    dataKeys.push(k);
+                } else if (!labelKey && (typeof val === 'string')) {
+                    labelKey = k;
+                }
+            });
+
+            // Fallback for label
+            if (!labelKey) labelKey = keys[0];
+
+            if (dataKeys.length === 0) {
+                // No numbers to plot
+                canvas.style.display = 'none';
+                noGraphMsg.style.display = 'block';
+                noGraphMsg.textContent = "No numeric data to visualize.";
+                return;
+            }
+
+            canvas.style.display = 'block';
+            noGraphMsg.style.display = 'none';
+
+            // Prepare Data
+            const labels = rows.map(r => r[labelKey]);
+            const datasets = dataKeys.map((k, i) => ({
+                label: k,
+                data: rows.map(r => r[k]),
+                backgroundColor: i === 0 ? 'rgba(139, 92, 246, 0.5)' : 'rgba(236, 72, 153, 0.5)',
+                borderColor: i === 0 ? 'rgba(139, 92, 246, 1)' : 'rgba(236, 72, 153, 1)',
+                borderWidth: 1
+            }));
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#e2e8f0' } }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
