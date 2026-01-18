@@ -1,123 +1,131 @@
-1. Basic Retrieval (Single / Simple Joins)
+# DVD Rental Database - Sample Questions
 
-“List all films with their title, release year, rental rate, and rating.”
+This document contains a comprehensive set of natural language queries designed to test the SQL Agent's ability to generate accurate SQL queries across various complexity levels.
 
-“Show all customers with their full name, email, and city.”
+## 1. Basic Retrieval (Single / Simple Joins)
 
-“Retrieve all actors whose last name starts with ‘S’.”
+Simple queries that involve one or two tables with straightforward joins.
 
-“Get all films available in the ‘Action’ category.”
+- "List all films with their title, release year, rental rate, and rating."
+- "Show all customers with their full name, email, and city."
+- "Retrieve all actors whose last name starts with 'S'."
+- "Get all films available in the 'Action' category."
+- "List all stores with their address and city."
 
-“List all stores with their address and city.”
+## 2. Date & Time Based Questions
 
-2. Date & Time Based Questions
+Queries involving date/time filtering and calculations.
 
-“Find all rentals made in the last 30 days.”
+- "Find all rentals made in the last 30 days."
+- "List customers who created their account in the last 90 days."
+- "Show rentals that were returned late (return_date is after rental_date + rental_duration)."
+- "Find films that were rented at least once in the year 2006."
+- "List payments made on weekends."
 
-“List customers who created their account in the last 90 days.”
+## 3. Aggregation & Metrics
 
-“Show rentals that were returned late (return_date is after rental_date + rental_duration).”
+Queries using aggregate functions like COUNT, SUM, AVG, etc.
 
-“Find films that were rented at least once in the year 2006.”
+- "Find the total number of rentals per customer."
+- "Show total revenue generated per store."
+- "List top 10 customers by total payment amount."
+- "Find the number of films in each category."
+- "Show average rental duration per film category."
 
-“List payments made on weekends.”
+## 4. Business-Style Analytical Questions
 
-3. Aggregation & Metrics
+**Very Important for LLM Evaluation** - These queries simulate real business intelligence questions.
 
-“Find the total number of rentals per customer.”
+- "Which films have generated the highest total revenue?"
+- "Which customers have rented more than 20 films?"
+- "Find the most rented film in each category."
+- "Which store has the highest number of active customers?"
+- "Which staff member processed the highest number of rentals?"
 
-“Show total revenue generated per store.”
+## 5. Multi-Table Join Reasoning
 
-“List top 10 customers by total payment amount.”
+**Good LLM Stress Tests** - Complex queries requiring multiple table joins and logical reasoning.
 
-“Find the number of films in each category.”
+- "List film titles along with their actors’ full names."
+- "Show customers, their city, and country."
+- "Find films that were never rented."
+- "List customers who rented films from more than 3 different categories."
+- "Find actors who acted in more than 10 films."
 
-“Show average rental duration per film category.”
+## 6. Inventory & Availability Logic
 
-4. Business-Style Analytical Questions (Very Important for LLM Evaluation)
+Queries related to inventory management and availability tracking.
 
-“Which films have generated the highest total revenue?”
+- "Find all films currently available for rent (not rented out)."
+- "List films that have no inventory in store 1."
+- "Find the total number of copies available per film."
+- "Show inventory items that were never rented."
+- "Find stores that have inventory for the same film."
 
-“Which customers have rented more than 20 films?”
+## 7. Revenue & Payments
 
-“Find the most rented film in each category.”
+**Common Real-World Use Case** - Financial and payment-related queries.
 
-“Which store has the highest number of active customers?”
+- "Calculate total revenue per month."
+- "Find customers who have made payments exceeding $100 in total."
+- "Show revenue contribution by film category."
+- "Find customers who have overdue rentals and unpaid balances."
+- "List the top 5 films by revenue in each store."
 
-“Which staff member processed the highest number of rentals?”
+## 8. Advanced / Edge-Case Questions
 
-5. Multi-Table Join Reasoning (Good LLM Stress Tests)
+**Excellent for Guardrail Testing** - Complex edge cases that test the agent's robustness.
 
-“List film titles along with their actors’ full names.”
+- "Find customers who rented a film but never made a payment."
+- "List films that were rented but never returned."
+- "Find customers who rented the same film more than once."
+- "Show actors who have never acted in a film."
+- "Identify customers who rented films from every available category."
 
-“Show customers, their city, and country.”
+## 9. Natural-Language → SQL Ambiguity Control
 
-“Find films that were never rented.”
+### Recommended Patterns
 
-“List customers who rented films from more than 3 different categories.”
+Use specific phrasing to help the LLM generate accurate SQL:
 
-“Find actors who acted in more than 10 films.”
+- **"For each…"** → Indicates `GROUP BY`
+- **"At least…"** → Indicates `HAVING` with comparison
+- **"Never…"** → Indicates `NOT EXISTS` or `LEFT JOIN` with `NULL` check
+- **"More than…"** → Indicates `HAVING` with `>` operator
+- **"Currently…"** → Indicates filtering for active/current state
+- **"Total revenue…"** → Indicates `SUM()` aggregate function
 
-6. Inventory & Availability Logic
+### SQL Patterns These Help Infer
 
-“Find all films currently available for rent (not rented out).”
+These natural language patterns help the LLM understand when to use:
 
-“List films that have no inventory in store 1.”
+- `GROUP BY` - For aggregating data by categories
+- `HAVING` - For filtering aggregated results
+- `LEFT JOIN` - For finding missing relationships
+- `NOT EXISTS` - For negation queries
+- **Date arithmetic** - For time-based calculations
 
-“Find the total number of copies available per film.”
+## Usage Tips
 
-“Show inventory items that were never rented.”
+1. **Start Simple**: Begin with Basic Retrieval queries to verify the agent works correctly
+2. **Progress Gradually**: Move to more complex queries as confidence builds
+3. **Test Edge Cases**: Use Advanced queries to ensure robust error handling
+4. **Validate Results**: Cross-check results using pgAdmin or direct SQL queries
+5. **Monitor Performance**: Track which query types the agent handles best
 
-“Find stores that have inventory for the same film.”
+## Query Categories Summary
 
-7. Revenue & Payments (Common Real-World Use Case)
+| Category | Complexity | Count | Primary SQL Features |
+|----------|-----------|-------|---------------------|
+| Basic Retrieval | ⭐ | 5 | SELECT, JOIN |
+| Date & Time | ⭐⭐ | 5 | Date functions, filtering |
+| Aggregation | ⭐⭐ | 5 | COUNT, SUM, AVG, GROUP BY |
+| Business Analytics | ⭐⭐⭐ | 5 | Complex aggregations, ranking |
+| Multi-Table Joins | ⭐⭐⭐⭐ | 5 | Multiple JOINs, subqueries |
+| Inventory Logic | ⭐⭐⭐ | 5 | NOT EXISTS, availability checks |
+| Revenue & Payments | ⭐⭐⭐ | 5 | Financial calculations |
+| Advanced/Edge Cases | ⭐⭐⭐⭐⭐ | 5 | Complex logic, edge cases |
 
-“Calculate total revenue per month.”
+---
 
-“Find customers who have made payments exceeding $100 in total.”
-
-“Show revenue contribution by film category.”
-
-“Find customers who have overdue rentals and unpaid balances.”
-
-“List the top 5 films by revenue in each store.”
-
-8. Advanced / Edge-Case Questions (Excellent for Guardrail Testing)
-
-“Find customers who rented a film but never made a payment.”
-
-“List films that were rented but never returned.”
-
-“Find customers who rented the same film more than once.”
-
-“Show actors who have never acted in a film.”
-
-“Identify customers who rented films from every available category.”
-
-9. Natural-Language → SQL Ambiguity Control (Recommended Patterns)
-
-Use phrasing like:
-
-“For each…”
-
-“At least…”
-
-“Never…”
-
-“More than…”
-
-“Currently…”
-
-“Total revenue…”
-
-These help the LLM infer:
-
-GROUP BY
-
-HAVING
-
-LEFT JOIN
-
-NOT EXISTS
-
-Date arithmetic
+**Total Questions**: 40+ queries covering all major SQL patterns and business scenarios.
