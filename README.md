@@ -146,7 +146,7 @@ The `sample_data/questions.md` file contains 100+ example queries organized by c
 - **Database Admin**: pgAdmin 4
 - **Package Manager**: uv
 - **Environment**: python-dotenv
-- **Monitoring**: Logfire (optional)
+- **Monitoring**: loguru (optional)
 
 ## 🔧 Configuration
 
@@ -203,6 +203,20 @@ This project is for learning purposes.
 # Install dependencies
 uv sync
 
+# switch to sql_agents directory
+cd sql_agents
+
 # Run the application
-uv run uvicorn sql_agents.api:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn api:app --reload --host 0.0.0.0 --port 8000
 ```
+
+## 📸 Screenshots
+
+### Main Interface
+![Main UI](sample_data/ui.png)
+
+### Query Example 1
+![Query Example 1](sample_data/ui_query_1.png)
+
+### Query Example 2
+![Query Example 2](sample_data/ui_query2.png)

@@ -1,6 +1,7 @@
 import os
 from pydantic_ai import Agent
 from pydantic_ai.models.gemini import GeminiModel
+from loguru import logger as log
 
 from utils.database import DatabaseDeps
 from prompts.system_prompts import SYSTEM_PROMPT
@@ -11,7 +12,9 @@ from utils.config import load_environment
 load_environment()
 
 # Define the model
-model = GeminiModel('gemini-2.5-flash')
+model_name = 'gemini-2.5-flash'
+log.info(f"Initializing SQL agent with model: {model_name}")
+model = GeminiModel(model_name)
 
 sql_agent = Agent(
     model,
@@ -21,6 +24,8 @@ sql_agent = Agent(
 )
 
 # Register tools
+log.info("Registering agent tools: list_tables, get_table_schema")
 sql_agent.tool(list_tables)
 sql_agent.tool(get_table_schema)
+log.info("SQL agent initialized successfully")
 # Agent no longer has execute_query tool
